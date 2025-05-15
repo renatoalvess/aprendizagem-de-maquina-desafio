@@ -1,11 +1,12 @@
-# Equipe - Deafio de Aprendizagem de máquina - UFCA
+# Equipe - Aprendizagem de máquina - UFCA
 
 - Cicero Emanuel Palácio da Silva - Matrícula: 2023009557
 - Francisco Renato Alves do Nascimento - Matrícula: 2023009628
+- José Valbério da Silva Sousa - Matrícula: 2023009691
 
-# Classificador de Flores com KNN
+# Classificador de Flores com KNN e K-means
 
-Esta aplicação é um exemplo simples de um classificador de flores usando o algoritmo KNN aplicado ao dataset Iris. A aplicação é construída com Python e Flask, e exibe tanto a predição para novos valores quanto as métricas de desempenho (acurácia, precisão e recall) para os conjuntos de treinamento e teste. Além disso, o front-end apresenta gráficos da matriz de confusão e da superfície de decisão, e a interface conta com uma logo da UFCA centralizada no topo.
+Esta aplicação é um exemplo simples de um classificador de flores usando o algoritmo KNN e de agrupamento usando o k-means aplicado ao dataset Iris. A aplicação é construída com Python e Flask, e exibe tanto a predição para novos valores quanto as métricas de desempenho para os conjuntos de treinamento e teste. Além disso, o front-end apresenta gráficos da matriz de confusão, superfície de decisão (KNN) e gráficos de clusters (K-means), a interface conta com uma logo da UFCA centralizada no topo.
 
 ## Pré-requisitos
 
@@ -71,9 +72,9 @@ KNN-back-front-sample/
 ## Uso da Aplicação
 
 - **Treino:** Clique no botão "Treino" para treinar o classificador usando o dataset Iris.
-- **Teste:** Clique no botão "Teste" para visualizar as métricas de desempenho do modelo (tanto para o conjunto de treinamento quanto para o teste), além dos gráficos da matriz de confusão e da superfície de decisão.
+- **Teste:** Clique no botão "Teste" para visualizar as métricas de desempenho do modelo.
 - **Teste Novo Valor:** Preencha os campos com as medidas de uma nova amostra e clique em "Enviar Valores" para obter a predição.
 
 ---
 
-Este projeto serve como exemplo básico para aprendizado e demonstração do uso do Flask e do KNN. Sinta-se à vontade para expandir ou modificar conforme necessário.
+Este projeto serve como exemplo básico para aprendizado e demonstração do uso do Flask e dos algorítmos KNN e K-means. Sinta-se à vontade para expandir ou modificar conforme necessário.

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Classificador de Flores com KNN</title>
+  <title>Classificador de Flores com KNN e K-means</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,12 +14,14 @@
       text-align: center;
       margin-bottom: 20px;
     }
-    h1, h2 {
+
+    h1,
+    h2 {
       color: #333;
     }
     button {
       padding: 10px 20px;
-      margin: 10px 0;
+      margin: 10px 5px;
       border: none;
       cursor: pointer;
       background-color: #007BFF;
@@ -35,7 +37,7 @@
       background: white;
       padding: 15px;
       border-radius: 4px;
-      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
       display: none;
       margin-left: auto;
       margin-right: auto;
@@ -88,11 +90,36 @@
       animation: spin 1s linear infinite;
     }
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
+
     /* Container dos resultados, inicialmente oculto */
     #resultsContent {
       display: none;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .knn-btn {
+      background-color: #37120B;
+    }
+
+    .kmeans-btn {
+      background-color: #F68451
+    }
+
+    .resumo {
+      flex: 1;
+      text-align: left;
+      padding: 10px;
+
     }
   </style>
 </head>
@@ -102,13 +129,16 @@
     <img src="https://upload.wikimedia.org/wikipedia/commons/8/8e/Logomarca_UFCA.svg" alt="Logo UFCA" width="200">
   </div>
 
-  <h1>Classificador de Flores com KNN</h1>
-  <div>
-    <button id="btnTreinar" onclick="treinar()">Treino</button>
-    <button onclick="testar()">Teste</button>
+  <h1>Classificador de Flores com KNN e K-means</h1>
+
+  <div class="button-group">
+    <button id="btnTreinarKNN" class="knn-btn" onclick="treinarKNN()">Treinar KNN</button>
+    <button id="btnTestarKNN" class="knn-btn" onclick="testarKNN()">Testar KNN</button>
+    <button id="btnTreinarKmeans" class="kmeans-btn" onclick="treinarKmeans()">Treinar K-means</button>
+    <button id="btnTestarKmeans" class="kmeans-btn" onclick="testarKmeans()">Testar K-means</button>
   </div>
   <div>
-    <h2>Teste Novo Valor</h2>
+    <h2>Teste Novo Valor (KNN)</h2>
     <form id="formPredict">
       <div class="form-group">
         <input type="number" step="any" name="sepal_length" placeholder="Comprimento da Sépala (cm)" required>
@@ -122,9 +152,9 @@
     </form>
     <div id="resultadoPredict">Resultado da Predição: </div>
   </div>
-  
+
   <div id="testResults">
-    <h2>Resultados do Teste</h2>
+    <h2 id="resultsTitle">Resultados</h2>
     <div id="loading">
       <div class="spinner"></div>
       <span>Carregando resultados...</span>
@@ -132,55 +162,56 @@
     <div id="resultsContent">
       <div id="metrics"></div>
       <div>
-        <h3>Matriz de Confusão</h3>
-        <img id="cmImage" class="graph" src="" alt="Matriz de Confusão">
+        <h3 id="graph1Title">Gráfico 1</h3>
+        <img id="graph1Image" class="graph" src="" alt="Gráfico 1">
       </div>
       <div>
-        <h3>Superfície de Decisão</h3>
-        <img id="dsImage" class="graph" src="" alt="Superfície de Decisão">
+        <h3 id="graph2Title">Gráfico 2</h3>
+        <img id="graph2Image" class="graph" src="" alt="Gráfico 2">
       </div>
     </div>
   </div>
-  
+
   <script>
-    function treinar() {
-      document.getElementById('btnTreinar').disabled = true;
-      fetch('/train', {
+    function treinarKNN() {
+      document.getElementById('btnTreinarKNN').disabled = true;
+      fetch('/train_knn', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({dataset: "iris"})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataset: "iris" })
       })
-      .then(response => response.json())
-      .then(data => {
-        alert(data.message);
-        document.getElementById('btnTreinar').style.backgroundColor = "green";
-        document.getElementById('btnTreinar').disabled = false;
-      })
-      .catch(error => {
-        console.error('Erro:', error);
-        document.getElementById('btnTreinar').disabled = false;
-      });
+        .then(response => response.json())
+        .then(data => {
+          alert(data.message);
+          document.getElementById('btnTreinarKNN').style.backgroundColor = "green";
+          document.getElementById('btnTreinarKNN').disabled = false;
+        })
+        .catch(error => {
+          console.error('Erro:', error);
+          document.getElementById('btnTreinarKNN').disabled = false;
+        });
     }
 
-    function testar() {
+    function testarKNN() {
       const testResultsDiv = document.getElementById('testResults');
       testResultsDiv.style.display = "block";
       document.getElementById('loading').style.display = "flex";
       document.getElementById('resultsContent').style.display = "none";
-      
-      fetch('/test')
-      .then(response => response.json())
-      .then(data => {
-        let testAcc = (data.test_metrics.accuracy * 100).toFixed(1);
-        let testPrec = (data.test_metrics.precision * 100).toFixed(1);
-        let testRec = (data.test_metrics.recall * 100).toFixed(1);
-        
-        let trainAcc = (data.train_metrics.accuracy * 100).toFixed(1);
-        let trainPrec = (data.train_metrics.precision * 100).toFixed(1);
-        let trainRec = (data.train_metrics.recall * 100).toFixed(1);
-        
-        let metricsHTML = `
-         <h3>Métricas de Treinamento</h3>
+      document.getElementById('resultsTitle').textContent = "Resultados do KNN";
+
+      fetch('/test_knn')
+        .then(response => response.json())
+        .then(data => {
+          let testAcc = (data.test_metrics.accuracy * 100).toFixed(1);
+          let testPrec = (data.test_metrics.precision * 100).toFixed(1);
+          let testRec = (data.test_metrics.recall * 100).toFixed(1);
+
+          let trainAcc = (data.train_metrics.accuracy * 100).toFixed(1);
+          let trainPrec = (data.train_metrics.precision * 100).toFixed(1);
+          let trainRec = (data.train_metrics.recall * 100).toFixed(1);
+
+          let metricsHTML = `
+          <h3>Métricas de Treinamento</h3>
           <p>Acurácia: ${trainAcc}%</p>
           <p>Precisão: ${trainPrec}%</p>
           <p>Recall: ${trainRec}%</p>
@@ -190,23 +221,78 @@
           <p>Precisão: ${testPrec}%</p>
           <p>Recall: ${testRec}%</p>
           <hr>
-          <h1>Gráficos de Teste</h1>
+          <h1>Gráficos do KNN</h1>
         `;
-        
-        document.getElementById('metrics').innerHTML = metricsHTML;
-        document.getElementById('cmImage').src = "data:image/png;base64," + data.confusion_matrix;
-        document.getElementById('dsImage').src = "data:image/png;base64," + data.decision_surface;
-        
-        document.getElementById('loading').style.display = "none";
-        document.getElementById('resultsContent').style.display = "block";
-      })
-      .catch(error => {
-        console.error('Erro:', error);
-        document.getElementById('loading').innerText = "Erro ao carregar resultados.";
-      });
+
+          document.getElementById('metrics').innerHTML = metricsHTML;
+          document.getElementById('graph1Title').textContent = 'Matriz de Confusão';
+          document.getElementById('graph1Image').src = "data:image/png;base64," + data.confusion_matrix;
+          document.getElementById('graph2Title').textContent = 'Superfície de Decisão';
+          document.getElementById('graph2Image').src = "data:image/png;base64," + data.decision_surface;
+
+          document.getElementById('loading').style.display = "none";
+          document.getElementById('resultsContent').style.display = "block";
+        })
+        .catch(error => {
+          console.error('Erro:', error);
+          document.getElementById('loading').innerText = "Erro ao carregar resultados.";
+        });
     }
 
-    document.getElementById('formPredict').addEventListener('submit', function(e) {
+    function treinarKmeans() {
+      document.getElementById('btnTreinarKmeans').disabled = true;
+      fetch('/train_kmeans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataset: "iris" })
+      })
+        .then(response => response.json())
+        .then(data => {
+          alert(data.message);
+          document.getElementById('btnTreinarKmeans').style.backgroundColor = "green";
+          document.getElementById('btnTreinarKmeans').disabled = false;
+        })
+        .catch(error => {
+          console.error('Erro:', error);
+          document.getElementById('btnTreinarKmeans').disabled = false;
+        });
+    }
+
+    function testarKmeans() {
+      const testResultsDiv = document.getElementById('testResults');
+      testResultsDiv.style.display = "block";
+      document.getElementById('loading').style.display = "flex";
+      document.getElementById('resultsContent').style.display = "none";
+      document.getElementById('resultsTitle').textContent = "Resultados do K-means";
+
+      fetch('/test_kmeans')
+        .then(response => response.json())
+        .then(data => {
+          let metricsHTML = `
+          <h3>Métricas do K-means</h3>
+          <p>Calinski-Harabasz Index: ${data.calinski_harabasz_score.toFixed(3)}</p>
+          <p>Inércia: ${data.inertia.toFixed(2)}</p>
+          <p>Número de iterações: ${data.n_iter}</p>
+          <hr>
+          <h1>Gráficos do K-means</h1>
+`;
+
+          document.getElementById('metrics').innerHTML = metricsHTML;
+          document.getElementById('graph1Title').textContent = 'Gráfico de Clusters';
+          document.getElementById('graph1Image').src = "data:image/png;base64," + data.cluster_plot;
+          document.getElementById('loading').style.display = "none";
+          document.getElementById('resultsContent').style.display = "block";
+          document.getElementById('graph2Title').textContent = 'Comparação: Clusters vs Rótulos Originais';
+          document.getElementById('graph2Image').src = "data:image/png;base64," + data.comparison_plot;
+
+        })
+        .catch(error => {
+          console.error('Erro:', error);
+          document.getElementById('loading').innerText = "Erro ao carregar resultados.";
+        });
+    }
+
+    document.getElementById('formPredict').addEventListener('submit', function (e) {
       e.preventDefault();
       const formData = new FormData(this);
       const data = {
@@ -215,19 +301,19 @@
         petal_length: parseFloat(formData.get('petal_length')),
         petal_width: parseFloat(formData.get('petal_width'))
       };
-      
+
       fetch('/predict', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
-      .then(response => response.json())
-      .then(result => {
-        const resultadoDiv = document.getElementById('resultadoPredict');
-        resultadoDiv.innerText = "Resultado da Predição: " + result.predicao;
-        resultadoDiv.style.display = "block";
-      })
-      .catch(error => console.error('Erro:', error));
+        .then(response => response.json())
+        .then(result => {
+          const resultadoDiv = document.getElementById('resultadoPredict');
+          resultadoDiv.innerText = "Resultado da Predição: " + result.predicao;
+          resultadoDiv.style.display = "block";
+        })
+        .catch(error => console.error('Erro:', error));
     });
   </script>
 </body>
